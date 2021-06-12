@@ -1,0 +1,51 @@
+pipeline {
+     agent any
+    stages {
+        stage('build') {
+            steps {
+                echo "build steps"
+            }
+        }
+        stage('testing') {
+            steps {
+                echo "unit testing"
+            }
+        }
+    }
+} 
+
+ post {
+        success {
+            emailext (
+                to: '[hidden email]',
+                mimeType: 'text/html',
+                subject: "*************** As excepted***********",
+                body: "************** As excepted **************"
+            )
+        }
+        failure {
+            emailext (
+                to: '[hidden email]',
+                mimeType: 'text/html',
+                subject: "*************** As excepted***********",
+                body: "************** As excepted **************"
+            )
+            create_newjira_issue()
+    }
+}
+
+void create_newjira_issue() {
+    node {
+      stage('JIRA') {
+        def NewJiraIssue = [fields: [project: [key: 'PROJETC_NAME : can be taken from JIRA website'],
+            summary: 'Build Failed : Summary.',
+            description: 'Description of JIRA ticket ',
+            issuetype: [id: 'PROJECT ID : can get using JIRA API']]]
+
+    response = jiraNewIssue issue: NewJiraIssue, site: 'THAT CAN BE SET IN JENKINS CONFIGURATION OR CAN DIRECTLY WRITE HERE'
+
+    echo response.successful.toString()
+    echo response.data.toString()
+    }
+  }
+}
